@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Ajax file uploader / irmantas.com</title>
+		<link type="text/css" rel="stylesheet" href="style.css"  />
+		<link type="text/css" rel="stylesheet" href="is.ajaxupload.css"  />
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+		<script type="text/javascript">
+		/*<![CDATA[*/
+		document.write('<scr'+'ipt type="text/javascript" src="js/is.ajaxupload.js?id='+(new Date()).getTime()+'"></scr'+'ipt>');
+		/*]]>*/
+		</script>
+		<script type="text/javascript" src="js/is.ajaxupload.js"></script>
+	</head>
+	<body>
+	<div id="wrapper">
+	
+		<div id="uploader">
+			<noscript>You should enable Javascript to use this uploader!</noscript>
+		</div>
+		<script type="text/javascript">
+		/*<![CDATA[*/
+		$(function(){
+			$('#uploader').ajaxUpload({
+				action: 'upload.php'
+			});
+		});
+		/*]]>*/
+		</script>
+	</div>
+	</body>
+</html>
