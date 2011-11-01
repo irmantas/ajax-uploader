@@ -97,7 +97,8 @@
 						e.preventDefault();
 						zone.hide();
 						zone.removeClass('is-au-over');
-						var handler = uploadHandler.upload(e.dataTransfer.files);
+						var handler = getHandler.get();
+						handler.upload(e.dataTransfer.files);
 						return;
 					});
 					
@@ -105,7 +106,7 @@
 				}
 			};
 			
-			var uploadHandler = {
+			var uploadHandlerForm = {
 				upload: function (fileList) {
 					var iframe = this.createIfrme((new Date).getTime());
 					var form = this.createForm(iframe, opt.params);
@@ -122,6 +123,9 @@
 					form.append(file);
 					form.submit();
 					//form.remove(elem);
+
+					var fr = new FileReader();
+					console.log(fr);
 				},
 				createIfrme: function (id) {
 					var iframe = $('<iframe src="javascript:false" name="'+id+'" id="'+id+'" />');
@@ -138,6 +142,115 @@
 					form.hide();
 					$('body').append(form);
 					return form;
+				}
+			};
+
+			var uploadHandlerXhr = {
+				boundary: '------multipartformboundary' + (new Date()).getTime(),
+				dashdash: '--',
+				crlf: '\n\r',
+				builder: '',
+				upload: function (fileList) {
+					var self = this;
+
+					if (XMLHttpRequest.prototype.sendAsBinary === undefined) {
+						XMLHttpRequest.prototype.sendAsBinary = function(string){
+							var bytes = Array.prototype.map.call(string, function(c) {
+								return c.charCodeAt(0) & 0xff;
+							});
+							this.send(new Uint8Array(bytes).buffer);
+						};
+					}
+
+					var xhr = new XMLHttpRequest();
+
+					var reader = new FileReader();
+
+					this.builder += this.dashdash;
+					this.builder += this.boundary;
+					this.builder += this.crlf;
+
+					for (var i=0; i<fileList.length;i++) {
+						this.uploadFile(fileList[i], reader);
+					}
+
+					this.builder += this.dashdash;
+					this.builder += this.boundary;
+					this.builder += this.dashdash;
+					this.builder += this.crlf;
+
+					var params = opt.params || {};
+					xhr.open('POST', opt.action + "?" + $.param(params), true);
+					xhr.setRequestHeader('content-type', 'multipart/form-data; boundary=' + this.boundary);
+					xhr.sendAsBinary(this.builder);
+				},
+				uploadFile: function (file, reader) {
+					var name = file.fileName != null ? file.fileName : file.name,
+						size = file.fileSize != null ? file.fileSize : file.size;
+						type = file.fileType != null ? file.fileType : file.type;
+
+					//var xhr = new XMLHttpRequest();
+					//var self = this;
+
+					//xhr.upload.onprogress = function (e) {
+						//TODO: uploadHandlerXhr onprogress event
+					//};
+
+					//xhr.onreadystatechange = function () {
+					//	if (xhr.readyState == 4) {
+							//TODO: uploadHandlerXhr on complete event
+					//	}
+					//};
+
+					
+					//params[opt.name] = name;
+					//params['stamp'] = (new Date()).getTime();
+					//xhr.open('POST', opt.action + "?" + $.param(params), true);
+					/*//xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+					//xhr.setRequestHeader("X-File-Name", encodeURIComponent(name));
+					//xhr.setRequestHeader("Content-Type", "application/octet-stream");
+					//xhr.send(file);
+					xhr.setRequestHeader("Cache-Control", "no-cache");
+					xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+					xhr.setRequestHeader("X-File-Name", encodeURIComponent(name));
+					xhr.setRequestHeader("X-File-Size", encodeURIComponent(size));
+					xhr.setRequestHeader("X-File-Type", type);
+					xhr.setRequestHeader("Content-Type", "application/octet-stream");
+					xhr.setRequestHeader("Content-Disposition", 'form-data; name="user_file[]"');
+					xhr.sendAsBinary(file);*/
+
+					/* Generate headers. */
+					this.builder += 'Content-Disposition: form-data; name="'+opt.name+'[]"';
+					this.builder += '; filename="' + name + '"';
+					this.builder += this.crlf;
+
+					this.builder += 'Content-Type: application/octet-stream';
+					this.builder += this.crlf;
+					this.builder += this.crlf;
+
+					/* Append binary data. */
+					this.builder += reader.readAsBinaryString(file);
+					this.builder += this.crlf;
+
+					/* Write boundary. */
+					this.builder += this.dashdash;
+        			this.builder += this.boundary;
+        			this.builder += this.crlf;
+				}
+			};
+
+			var getHandler = {
+				get: function () {
+					if (this.isSuportedHxrHandler())
+						return uploadHandlerXhr;
+					return uploadHandlerForm;
+				},
+				isSuportedHxrHandler: function () {
+					var inp = document.createElement('input');
+					inp.type = "file";
+
+					return ('multiple' in inp && typeof File != undefined &&
+						typeof (new XMLHttpRequest()).upload != undefined);
 				}
 			};
 			
