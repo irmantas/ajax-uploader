@@ -14,23 +14,24 @@
 				},
 				debug: false,
 				multiple: true,
+				defaultUploadMethod:'xhr',
 				onSubmit: function () {},
 				onComplete: function () {},
 				buttonTemplate: '<div id="is-au-button">{buttonTitle}</div>',
 				dragDropZoneTemplate: '<div id="is-au-dgzone">{dragDropZone}</div>'
 			};
 			
-			var opt = $.extend(defaults, options);
+			var opt = $.extend(defaults, options), input = button = null;
 			
 			var uploadButton = {
 				createButton: function () {
-					var button = $(opt.buttonTemplate.replace('{buttonTitle}', opt.strings.buttonTitle));
+					button = $(opt.buttonTemplate.replace('{buttonTitle}', opt.strings.buttonTitle));
 					button.append(this.createInput());
 					return button;
 				},
 				createInput: function () {
-					var input = $('<input />');
-					if (opt.multiple) {
+					input = $('<input />');
+					if (opt.multiple && getHandler.isSuportedHxrHandler() && opt.defaultUploadMethod == 'xhr') {
 						input.attr('multiple', 'multiple');
 					}
 					
@@ -45,6 +46,11 @@
 						cursor:'pointer',
 						opacity:0,
 						zIndex:1
+					});
+
+					input.change(function(){
+						var handler = getHandler.get();
+						handler.upload(this.files);
 					});
 					
 					return input;
@@ -117,15 +123,14 @@
 					});
 				},
 				uploadFile: function (file, form) {
-					var elem = $('<input type="file" name="'+opt.name+'">');
-					console.log(file);
-					//elem.val(file);
-					form.append(file);
+					//console.log(clone, $(clone).val(), file, (new Date()).getTime());
+					button.append($(input).clone());
+					form.html(input);
 					form.submit();
 					//form.remove(elem);
 
-					var fr = new FileReader();
-					console.log(fr);
+					//var fr = new FileReader();
+					//console.log(fr);
 				},
 				createIfrme: function (id) {
 					var iframe = $('<iframe src="javascript:false" name="'+id+'" id="'+id+'" />');
@@ -136,7 +141,7 @@
 				createForm: function(iframe, params) {
 					var form = $('<form method="post" enctype="multipart/form-data"></form>');
 					form.attr({
-						action: opt.action + $.param(params),
+						action: opt.action + '?' + $.param(params),
 						target: iframe.attr('name')
 					});
 					form.hide();
@@ -167,6 +172,7 @@
 					xhr.onreadystatechange = function () {
 						if (xhr.readyState == 4) {
 							//TODO: uploadHandlerXhr on complete event
+							opt.onComplete(xhr.response, name);
 						}
 					};
 
@@ -190,7 +196,7 @@
 
 			var getHandler = {
 				get: function () {
-					if (this.isSuportedHxrHandler())
+					if (opt.defaultUploadMethod == 'xhr' && this.isSuportedHxrHandler())
 						return uploadHandlerXhr;
 					return uploadHandlerForm;
 				},

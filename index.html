@@ -23,7 +23,11 @@
 		$(function(){
 			$('#uploader').ajaxUpload({
 				action: 'upload.php',
-				params:{title: 'test'}
+				params:{title: 'test'},
+				defaultUploadMethod: 'frame',
+				onComplete: function (resp, file) {
+					console.log(resp, file);
+				}
 			});
 		});
 		/*]]>*/

@@ -47,7 +47,7 @@ class UploadHandlerForm extends UploadHandlerAbstract implements UploadHandlerIn
 	 * @throws Exception
 	 * @return void
 	 */
-	protected _checkFileIdentity ()
+	protected function _checkFileIdentity ()
 	{
 		if (!isset($_FILES[$this->id])) {
 			throw new Exception('File by identity does not exists');
